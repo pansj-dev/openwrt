@@ -66,7 +66,7 @@ get_mac_ascii() {
 	local key="$2"
 	local mac_dirty
 
-	mac_dirty=$(strings "$part" | sed -n 's/^'"$key"'=//p')
+	mac_dirty=$(strings "$part" | tr -d ' \t' | sed -n 's/^'"$key"'=//p' | head -n 1)
 
 	# "canonicalize" mac
 	[ -n "$mac_dirty" ] && macaddr_canonicalize "$mac_dirty"
@@ -205,6 +205,7 @@ mmc_get_mac_ascii() {
 	part=$(find_mmc_part "$part_name")
 	if [ -z "$part" ]; then
 		echo "mmc_get_mac_ascii: partition $part_name not found!" >&2
+		return
 	fi
 
 	get_mac_ascii "$part" "$key"
@@ -276,12 +277,6 @@ macaddr_random() {
 	local randsrc=$(get_mac_binary /dev/urandom 0)
 	
 	echo "$(macaddr_unsetbit_mc "$(macaddr_setbit_la "${randsrc}")")"
-}
-
-macaddr_2bin() {
-	local mac=$1
-
-	echo -ne \\x${mac//:/\\x}
 }
 
 macaddr_canonicalize() {
